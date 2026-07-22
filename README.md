@@ -32,3 +32,7 @@ Sistema-Restaurante
 ## Status
 
 🚧 Em desenvolvimento
+
+## Próximo passo
+
+Configurar Docker Compose.

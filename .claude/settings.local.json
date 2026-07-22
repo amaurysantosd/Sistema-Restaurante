@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(///wsl.localhost/Ubuntu/home/suporte/Projetos/Sistema-Restaurante/backend/prisma/**)",
+      "Read(///wsl.localhost/Ubuntu/home/suporte/Projetos/Sistema-Restaurante/backend/src/**)",
+      "Bash(ls -la \"//wsl.localhost/Ubuntu/home/suporte/Projetos/Sistema-Restaurante/backend/src/empresa/\")",
+      "Bash(find \"//wsl.localhost/Ubuntu/home/suporte/Projetos/Sistema-Restaurante/backend/test\" -type f 2>/dev/null)",
+      "Read(///wsl.localhost/Ubuntu/home/suporte/Projetos/Sistema-Restaurante/backend/**)",
+      "Bash(find \"//wsl.localhost/Ubuntu/home/suporte/Projetos/Sistema-Restaurante\" -iname \"*roadmap*\" -not -path \"*/node_modules/*\" 2>/dev/null)",
+      "Read(///wsl.localhost/Ubuntu/home/suporte/Projetos/**)",
+      "Bash(npx prisma *)",
+      "PowerShell(wsl.exe -e bash -lc \"cd /home/suporte/Projetos/Sistema-Restaurante/backend && pwd && node -v && npx --version\")",
+      "PowerShell(wsl.exe -e bash -ic \"cd /home/suporte/Projetos/Sistema-Restaurante/backend && pwd && which node && node -v && npx --version\")",
+      "PowerShell(wsl.exe -e bash -ic \"docker ps --format '{{.Names}}\\\\t{{.Status}}' | grep -i postgres || echo NO_CONTAINER\")"
+    ]
+  }
+}
