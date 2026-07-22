@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Perfil {
+  ADMIN
+  GERENTE
+  GARCOM
+  CAIXA
+  COZINHA
+  BAR
+}
+
+model Empresa {
+  id           String   @id @default(uuid())
+  nomeFantasia String
+  cnpj         String   @unique
+  telefone     String
+  email        String
+  ativo        Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  filiais    Filial[]
+  usuarios   Usuario[]
+  categorias Categoria[]
+}
+
+model Filial {
+  id        String   @id @default(uuid())
+  nome      String
+  cnpj      String?  @unique
+  telefone  String?
+  endereco  String?
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  empresaId String
+  empresa   Empresa @relation(fields: [empresaId], references: [id])
+
+  usuarios Usuario[]
+
+  @@index([empresaId])
+}
+
+model Usuario {
+  id        String   @id @default(uuid())
+  nome      String
+  email     String   @unique
+  senha     String
+  perfil    Perfil
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  empresaId String
+  empresa   Empresa @relation(fields: [empresaId], references: [id])
+
+  filialId String?
+  filial   Filial? @relation(fields: [filialId], references: [id])
+
+  @@index([empresaId])
+  @@index([filialId])
+}
+
+model Categoria {
+  id        String   @id @default(uuid())
+  nome      String
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  empresaId String
+  empresa   Empresa @relation(fields: [empresaId], references: [id])
+
+  @@unique([empresaId, nome])
+  @@index([empresaId])
+}
