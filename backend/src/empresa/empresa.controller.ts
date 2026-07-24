@@ -1,9 +1,20 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import { EmpresaService } from './empresa.service';
 import { CreateEmpresaDto } from './dto/create-empresa.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('empresa')
+@UseGuards(JwtAuthGuard) // Exige apenas estar autenticado (nao ha isolamento por empresaId aqui)
 export class EmpresaController {
   constructor(private readonly empresaService: EmpresaService) {}
 
