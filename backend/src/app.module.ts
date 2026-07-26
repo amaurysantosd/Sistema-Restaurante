@@ -8,13 +8,15 @@ import { FilialModule } from './filial/filial.module';
 import { UsuarioModule } from './usuario/usuario.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
+import { AmbienteModule } from './ambiente/ambiente.module';
+import { TipoAmbienteModule } from './tipo-ambiente/tipo-ambiente.module';
 
-@Module({
-  imports: [PrismaModule, EmpresaModule, CategoriaModule, FilialModule, UsuarioModule, AuthModule],
+/* @Module({
+  imports: [PrismaModule, EmpresaModule, CategoriaModule, FilialModule, UsuarioModule, AuthModule, AmbienteModule],
   controllers: [AppController],
   providers: [AppService],
 })
-
+ */
 
 @Module({
   imports: [
@@ -25,6 +27,8 @@ import { ConfigModule } from '@nestjs/config';
     FilialModule,
     UsuarioModule,
     AuthModule,
+    AmbienteModule,
+    TipoAmbienteModule,
   ],
 })
 

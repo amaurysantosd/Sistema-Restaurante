@@ -16,6 +16,7 @@ informações até lá? O PrismaService. */
 @Injectable()
 /* PrismaService herda todas as funcionalidades do PrismaClient */
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+
   constructor() {
     const pool = new Pool({
       connectionString: process.env.DATABASE_URL,

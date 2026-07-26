@@ -33,6 +33,8 @@ model Empresa {
   filiais    Filial[]
   usuarios   Usuario[]
   categorias Categoria[]
+
+  tipoAmbientes TipoAmbiente[]
 }
 
 model Filial {
@@ -51,6 +53,29 @@ model Filial {
   usuarios Usuario[]
 
   @@index([empresaId])
+  ambientes Ambiente[]
+}
+
+model Ambiente {
+  id          String       @id @default(uuid())
+  nome        String
+  descricao   String?
+  tipoAmbienteId String
+  tipoAmbiente   TipoAmbiente @relation(fields: [tipoAmbienteId], references: [id])
+  andar       Int?
+  capacidade  Int?
+  ativo       Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  filialId String
+  filial   Filial @relation(fields: [filialId], references: [id])
+
+  // mesas Mesa[]
+
+  /* cria um índice na coluna filialId, o que acelera consultas do tipo "todos os ambientes desta 
+  filial */
+  @@index([filialId])
 }
 
 model Usuario {
@@ -82,6 +107,22 @@ model Categoria {
 
   empresaId String
   empresa   Empresa @relation(fields: [empresaId], references: [id])
+
+  @@unique([empresaId, nome])
+  @@index([empresaId])
+}
+
+model TipoAmbiente {
+  id        String   @id @default(uuid())
+  nome      String
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  empresaId String
+  empresa   Empresa @relation(fields: [empresaId], references: [id])
+
+  ambientes Ambiente[]
 
   @@unique([empresaId, nome])
   @@index([empresaId])

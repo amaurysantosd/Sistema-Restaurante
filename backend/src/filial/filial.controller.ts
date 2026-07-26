@@ -15,12 +15,6 @@ export class FilialController {
     return this.filialService.create(dto);
     }
 
-    /* FindAll extrair dado da query string em vez do corpo da requisição. */
-/*     @Get()
-    findAll(@Query('empresaId') empresaId: string) {
-    return this.filialService.findAll(empresaId);
-    } */
-
     @Get()
     @UseGuards(JwtAuthGuard) // NOVO: exige token JWT válido pra acessar essa rota
     findAll(@Req() req: any) {
