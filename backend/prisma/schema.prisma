@@ -71,11 +71,32 @@ model Ambiente {
   filialId String
   filial   Filial @relation(fields: [filialId], references: [id])
 
-  // mesas Mesa[]
-
   /* cria um índice na coluna filialId, o que acelera consultas do tipo "todos os ambientes desta 
   filial */
   @@index([filialId])
+
+  // Lado inverso da relacao: um Ambiente pode ter varias Mesas
+  mesas Mesa[]
+}
+
+model Mesa {
+  id         String   @id @default(uuid())
+  numero     String
+  capacidade Int?
+  qrCode     String   @unique
+  ativo      Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  /* Relacionamento cria uma coluna 'ambienteId', ]
+  Ela guarda o ID do ambiente ao qual a mesa pertence. */
+  ambienteId String
+  /* Relação - Essa linha diz ao Prisma: "O campo ambienteId referencia o id da 
+  tabela Ambiente." */
+  ambiente   Ambiente @relation(fields: [ambienteId], references: [id])
+
+  // Cria um índice para a coluna ambienteId
+  @@index([ambienteId])
 }
 
 model Usuario {
@@ -127,3 +148,4 @@ model TipoAmbiente {
   @@unique([empresaId, nome])
   @@index([empresaId])
 }
+

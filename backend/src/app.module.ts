@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { AmbienteModule } from './ambiente/ambiente.module';
 import { TipoAmbienteModule } from './tipo-ambiente/tipo-ambiente.module';
+import { MesaModule } from './mesa/mesa.module';
 
 /* @Module({
   imports: [PrismaModule, EmpresaModule, CategoriaModule, FilialModule, UsuarioModule, AuthModule, AmbienteModule],
@@ -29,6 +30,7 @@ import { TipoAmbienteModule } from './tipo-ambiente/tipo-ambiente.module';
     AuthModule,
     AmbienteModule,
     TipoAmbienteModule,
+    MesaModule, 
   ],
 })
 
