@@ -11,6 +11,10 @@ import { ConfigModule } from '@nestjs/config';
 import { AmbienteModule } from './ambiente/ambiente.module';
 import { TipoAmbienteModule } from './tipo-ambiente/tipo-ambiente.module';
 import { MesaModule } from './mesa/mesa.module';
+import { IngredienteModule } from './ingrediente/ingrediente.module';
+import { AlergenoModule } from './alergeno/alergeno.module';
+import { TagModule } from './tag/tag.module';
+import { ProdutoModule } from './produto/produto.module';
 
 /* @Module({
   imports: [PrismaModule, EmpresaModule, CategoriaModule, FilialModule, UsuarioModule, AuthModule, AmbienteModule],
@@ -30,7 +34,11 @@ import { MesaModule } from './mesa/mesa.module';
     AuthModule,
     AmbienteModule,
     TipoAmbienteModule,
-    MesaModule, 
+    MesaModule,
+    IngredienteModule,
+    AlergenoModule,
+    TagModule,
+    ProdutoModule,
   ],
 })
 

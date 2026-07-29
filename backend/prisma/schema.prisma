@@ -35,6 +35,12 @@ model Empresa {
   categorias Categoria[]
 
   tipoAmbientes TipoAmbiente[]
+
+  alergenos Alergeno[]
+
+  ingredientes Ingrediente[]
+
+  tags Tag[]
 }
 
 model Filial {
@@ -44,6 +50,7 @@ model Filial {
   telefone  String?
   endereco  String?
   ativo     Boolean  @default(true)
+  matriz    Boolean  @default(false) // Marca se esta Filial e a sede/matriz da empresa
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -51,9 +58,10 @@ model Filial {
   empresa   Empresa @relation(fields: [empresaId], references: [id])
 
   usuarios Usuario[]
+  ambientes Ambiente[]
 
   @@index([empresaId])
-  ambientes Ambiente[]
+  produtos Produto[]
 }
 
 model Ambiente {
@@ -131,6 +139,7 @@ model Categoria {
 
   @@unique([empresaId, nome])
   @@index([empresaId])
+  produtos Produto[]
 }
 
 model TipoAmbiente {
@@ -149,3 +158,185 @@ model TipoAmbiente {
   @@index([empresaId])
 }
 
+model Produto {
+  id                String    @id @default(uuid())
+  nome              String
+  slug              String
+  descricao         String?
+  descricaoCurta    String?
+  tempoPreparo      Int?      // em minutos
+  ativo             Boolean   @default(true)
+  destaque          Boolean   @default(false)
+  ordemExibicao     Int       @default(0)
+  visualizacoes     Int       @default(0)
+  vendas            Int       @default(0)
+
+  // Especifico para bebidas (opcional -- nao se aplica a comida)
+  ehAlcoolico     Boolean @default(false)
+  teorAlcoolico   Float?  // percentual de teor alcoolico
+  ibu             Int?    // amargor, especifico de cervejas
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // soft delete: nulo = ativo, preenchido = "removido"
+
+  filialId String
+  filial   Filial @relation(fields: [filialId], references: [id])
+
+  categoriaId String
+  categoria   Categoria @relation(fields: [categoriaId], references: [id])
+
+  @@unique([filialId, slug])
+  @@index([filialId])
+  @@index([categoriaId])
+
+  produtoMidias ProdutoMidia[]
+  produtoIngredientes ProdutoIngrediente[]
+  produtoAlergenos ProdutoAlergeno[]
+
+  harmonizacaos Harmonizacao[] @relation("ProdutoPrincipal")
+  harmonizacaosEm Harmonizacao[] @relation("ProdutoHarmonizado")
+  produtoTags ProdutoTag[]
+  produtoVariacaoPrecos ProdutoVariacaoPreco[]
+}
+
+enum TipoMidia {
+  FOTO
+  VIDEO
+}
+
+model ProdutoMidia {
+  id        String    @id @default(uuid())
+  tipo      TipoMidia
+  url       String
+  thumbnail String?   // miniatura, especialmente util para videos
+  ordem     Int       @default(0)
+  principal Boolean   @default(false) // marca qual midia aparece primeiro/capa
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  produtoId String
+  produto   Produto @relation(fields: [produtoId], references: [id])
+
+  @@index([produtoId])
+}
+
+model Ingrediente {
+  id    String  @id @default(uuid())
+  nome  String
+  ativo Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  empresaId String
+  empresa   Empresa @relation(fields: [empresaId], references: [id])
+
+  produtos ProdutoIngrediente[] // lado inverso da relacao N:N com Produto
+
+  @@unique([empresaId, nome])
+  @@index([empresaId])
+}
+
+model Alergeno {
+  id    String  @id @default(uuid())
+  nome  String  // ex: "Gluten", "Lactose", "Amendoim", "Frutos do mar"
+  ativo Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  empresaId String
+  empresa   Empresa @relation(fields: [empresaId], references: [id])
+
+  produtos ProdutoAlergeno[] // lado inverso da relacao N:N com Produto
+
+  @@unique([empresaId, nome])
+  @@index([empresaId])
+}
+
+model ProdutoIngrediente {
+  id String @id @default(uuid())
+
+  produtoId String
+  produto   Produto @relation(fields: [produtoId], references: [id])
+
+  ingredienteId String
+  ingrediente   Ingrediente @relation(fields: [ingredienteId], references: [id])
+
+  @@unique([produtoId, ingredienteId]) // evita duplicar o mesmo ingrediente no mesmo produto
+}
+
+model ProdutoAlergeno {
+  id String @id @default(uuid())
+
+  produtoId String
+  produto   Produto @relation(fields: [produtoId], references: [id])
+
+  alergenoId String
+  alergeno   Alergeno @relation(fields: [alergenoId], references: [id])
+
+  @@unique([produtoId, alergenoId])
+}
+
+model Harmonizacao {
+  id String @id @default(uuid())
+
+  produtoId String
+  produto   Produto @relation("ProdutoPrincipal", fields: [produtoId], references: [id])
+
+  produtoHarmonizadoId String
+  produtoHarmonizado   Produto @relation("ProdutoHarmonizado", fields: [produtoHarmonizadoId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([produtoId, produtoHarmonizadoId])
+}
+
+model Tag {
+  id    String  @id @default(uuid())
+  nome  String  // ex: "Familia", "Individual", "+18", "Vegano", "Mais vendido"
+  ativo Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  empresaId String
+  empresa   Empresa @relation(fields: [empresaId], references: [id])
+
+  produtos ProdutoTag[]
+
+  @@unique([empresaId, nome])
+  @@index([empresaId])
+}
+
+model ProdutoTag {
+  id String @id @default(uuid())
+
+  produtoId String
+  produto   Produto @relation(fields: [produtoId], references: [id])
+
+  tagId String
+  tag   Tag @relation(fields: [tagId], references: [id])
+
+  @@unique([produtoId, tagId])
+}
+
+model ProdutoVariacaoPreco {
+  id        String  @id @default(uuid())
+  nome      String  // ex: "Preco 1", "Dose", "Garrafa", "Vodka Smirnoff"
+  descricao String? // ex: "Vodka mais barata, frutas e energetico mais em conta"
+  preco     Float
+  principal Boolean @default(false) // qual variacao aparece como preco de destaque no cardapio
+  ordem     Int     @default(0)
+  ativo     Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  produtoId String
+  produto   Produto @relation(fields: [produtoId], references: [id])
+
+  @@index([produtoId])
+}
