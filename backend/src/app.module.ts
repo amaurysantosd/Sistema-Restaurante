@@ -15,6 +15,11 @@ import { IngredienteModule } from './ingrediente/ingrediente.module';
 import { AlergenoModule } from './alergeno/alergeno.module';
 import { TagModule } from './tag/tag.module';
 import { ProdutoModule } from './produto/produto.module';
+import { ProdutoVariacaoPrecoModule } from './produto-variacao-preco/produto-variacao-preco.module';
+import { ProdutoMidiaModule } from './produto-midia/produto-midia.module';
+import { ProdutoIngredienteModule } from './produto-ingrediente/produto-ingrediente.module';
+import { ProdutoAlergenoModule } from './produto-alergeno/produto-alergeno.module';
+import { ProdutoTagModule } from './produto-tag/produto-tag.module';
 
 /* @Module({
   imports: [PrismaModule, EmpresaModule, CategoriaModule, FilialModule, UsuarioModule, AuthModule, AmbienteModule],
@@ -39,6 +44,11 @@ import { ProdutoModule } from './produto/produto.module';
     AlergenoModule,
     TagModule,
     ProdutoModule,
+    ProdutoVariacaoPrecoModule,
+    ProdutoMidiaModule,
+    ProdutoIngredienteModule,
+    ProdutoAlergenoModule,
+    ProdutoTagModule,
   ],
 })
 
