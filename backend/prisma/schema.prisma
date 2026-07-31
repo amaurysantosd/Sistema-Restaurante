@@ -61,8 +61,12 @@ model Filial {
   ambientes Ambiente[]
 
   @@index([empresaId])
+
   produtos Produto[]
   combos Combo[]
+
+  clienteFiliais ClienteFilial[]
+  historicoVisitas HistoricoVisita[]
 }
 
 model Ambiente {
@@ -106,6 +110,7 @@ model Mesa {
 
   // Cria um índice para a coluna ambienteId
   @@index([ambienteId])
+  historicoVisitas HistoricoVisita[]
 }
 
 model Usuario {
@@ -117,6 +122,8 @@ model Usuario {
   ativo     Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  superAdmin Boolean @default(false)
 
   empresaId String
   empresa   Empresa @relation(fields: [empresaId], references: [id])
@@ -202,6 +209,7 @@ model Produto {
   produtoDisponibilidades ProdutoDisponibilidade[]
   comboItems ComboItem[]
   promocaos Promocao[]
+  favoritos Favorito[]
 }
 
 enum TipoMidia {
@@ -258,6 +266,7 @@ model Alergeno {
 
   @@unique([empresaId, nome])
   @@index([empresaId])
+  
 }
 
 model ProdutoIngrediente {
@@ -460,4 +469,111 @@ model ComboItem {
   @@unique([comboId, produtoId]) // um produto so pode aparecer uma vez por combo
   @@index([comboId])
   @@index([produtoId])
+}
+
+model Cliente {
+  id        String  @id @default(uuid())
+  nome      String
+  email     String? @unique
+  telefone  String? @unique
+  googleId  String? @unique
+  fotoUrl   String?
+  ativo     Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clienteFiliais ClienteFilial[]
+
+  favoritos Favorito[]
+
+  historicoVisitas HistoricoVisita[]
+
+  clienteRestricaos ClienteRestricao[]
+}
+
+model ClienteFilial {
+  id String @id @default(uuid())
+
+  pontosFidelidade Int      @default(0)
+  saldoCashback    Float    @default(0)
+  primeiraVisita   DateTime @default(now())
+  ativo            Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clienteId String
+  cliente   Cliente @relation(fields: [clienteId], references: [id])
+
+  filialId String
+  filial   Filial @relation(fields: [filialId], references: [id])
+
+  @@unique([clienteId, filialId])
+  @@index([clienteId])
+  @@index([filialId])
+}
+
+model Favorito {
+  id String @id @default(uuid())
+
+  createdAt DateTime @default(now())
+
+  clienteId String
+  cliente   Cliente @relation(fields: [clienteId], references: [id])
+
+  produtoId String
+  produto   Produto @relation(fields: [produtoId], references: [id])
+
+  @@unique([clienteId, produtoId]) // evita favoritar o mesmo produto duas vezes
+  @@index([clienteId])
+  @@index([produtoId])
+}
+
+model HistoricoVisita {
+  id String @id @default(uuid())
+
+  dataVisita DateTime @default(now())
+
+  clienteId String
+  cliente   Cliente @relation(fields: [clienteId], references: [id])
+
+  filialId String
+  filial   Filial @relation(fields: [filialId], references: [id])
+
+  // Opcional: em qual mesa, se aplicavel (pode ser null se for so um
+  // registro de "visitou a filial", sem vincular a uma mesa especifica)
+  mesaId String?
+  mesa   Mesa?   @relation(fields: [mesaId], references: [id])
+
+  @@index([clienteId])
+  @@index([filialId])
+}
+
+model ClienteRestricao {
+  id String @id @default(uuid())
+
+  createdAt DateTime @default(now())
+
+  clienteId String
+  cliente   Cliente @relation(fields: [clienteId], references: [id])
+
+  restricaoId String
+  restricao   RestricaoAlimentar @relation(fields: [restricaoId], references: [id])
+
+  @@unique([clienteId, restricaoId])
+  @@index([clienteId])
+  @@index([restricaoId])
+  
+}
+
+model RestricaoAlimentar {
+  id    String  @id @default(uuid())
+  nome  String  @unique // ex: "Sem Gluten", "Sem Lactose", "Vegetariano", "Vegano", "Sem Amendoim"
+  ativo Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clientes ClienteRestricao[]
 }

@@ -25,6 +25,7 @@ import { ProdutoDisponibilidadeModule } from './produto-disponibilidade/produto-
 import { PromocaoModule } from './promocao/promocao.module';
 import { ComboModule } from './combo/combo.module';
 import { ComboItemModule } from './combo-item/combo-item.module';
+import { RestricaoAlimentarModule } from './restricao-alimentar/restricao-alimentar.module';
 
 /* @Module({
   imports: [PrismaModule, EmpresaModule, CategoriaModule, FilialModule, UsuarioModule, AuthModule, AmbienteModule],
@@ -59,6 +60,7 @@ import { ComboItemModule } from './combo-item/combo-item.module';
     PromocaoModule,
     ComboModule,
     ComboItemModule,
+    RestricaoAlimentarModule,
   ],
 })
 

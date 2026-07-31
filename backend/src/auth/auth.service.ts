@@ -30,6 +30,7 @@ export class AuthService {
       sub: usuario.id,
       empresaId: usuario.empresaId,
       perfil: usuario.perfil,
+      superAdmin: usuario.superAdmin, // NOVO
     };
 
     const token = await this.jwtService.signAsync(payload);
