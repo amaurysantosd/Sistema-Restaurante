@@ -21,6 +21,10 @@ import { ProdutoIngredienteModule } from './produto-ingrediente/produto-ingredie
 import { ProdutoAlergenoModule } from './produto-alergeno/produto-alergeno.module';
 import { ProdutoTagModule } from './produto-tag/produto-tag.module';
 import { ProdutoHarmonizacaoModule } from './produto-harmonizacao/produto-harmonizacao.module';
+import { ProdutoDisponibilidadeModule } from './produto-disponibilidade/produto-disponibilidade.module';
+import { PromocaoModule } from './promocao/promocao.module';
+import { ComboModule } from './combo/combo.module';
+import { ComboItemModule } from './combo-item/combo-item.module';
 
 /* @Module({
   imports: [PrismaModule, EmpresaModule, CategoriaModule, FilialModule, UsuarioModule, AuthModule, AmbienteModule],
@@ -51,6 +55,10 @@ import { ProdutoHarmonizacaoModule } from './produto-harmonizacao/produto-harmon
     ProdutoAlergenoModule,
     ProdutoTagModule,
     ProdutoHarmonizacaoModule,
+    ProdutoDisponibilidadeModule,
+    PromocaoModule,
+    ComboModule,
+    ComboItemModule,
   ],
 })
 

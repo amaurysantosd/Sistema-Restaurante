@@ -62,6 +62,7 @@ model Filial {
 
   @@index([empresaId])
   produtos Produto[]
+  combos Combo[]
 }
 
 model Ambiente {
@@ -198,6 +199,9 @@ model Produto {
   harmonizacaosEm Harmonizacao[] @relation("ProdutoHarmonizado")
   produtoTags ProdutoTag[]
   produtoVariacaoPrecos ProdutoVariacaoPreco[]
+  produtoDisponibilidades ProdutoDisponibilidade[]
+  comboItems ComboItem[]
+  promocaos Promocao[]
 }
 
 enum TipoMidia {
@@ -338,5 +342,122 @@ model ProdutoVariacaoPreco {
   produtoId String
   produto   Produto @relation(fields: [produtoId], references: [id])
 
+  @@index([produtoId])
+  promocaos Promocao[]
+}
+
+model ProdutoDisponibilidade {
+  id String @id @default(uuid())
+
+  // Cada linha e UMA REGRA de disponibilidade. Um produto pode ter varias
+  // regras, permitindo combinacoes como:
+  //   Regra 1: segunda-sexta, das 18h as 23h
+  //   Regra 2: sabado-domingo, das 12h as 23h
+  // O produto fica disponivel se QUALQUER regra bater com o dia/hora atual.
+
+  domingo Boolean @default(false)
+  segunda Boolean @default(false)
+  terca   Boolean @default(false)
+  quarta  Boolean @default(false)
+  quinta  Boolean @default(false)
+  sexta   Boolean @default(false)
+  sabado  Boolean @default(false)
+
+  horaInicio String // ex: "18:00"
+  horaFim    String // ex: "23:00"
+
+  ativo Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  produtoId String  // SEM @unique agora -- um produto pode ter varias regras
+  produto   Produto @relation(fields: [produtoId], references: [id])
+
+  @@index([produtoId])
+}
+
+enum TipoDesconto {
+  PERCENTUAL
+  VALOR_FIXO
+}
+
+model Promocao {
+  id          String       @id @default(uuid())
+  nome        String       // ex: "Happy Hour", "Black Friday do Chopp"
+  descricao   String?
+  tipoDesconto TipoDesconto
+  valorDesconto Float       // ex: 20 (=20% se PERCENTUAL, ou R$20 se VALOR_FIXO)
+
+  // Promocao = "o PRECO muda num periodo", sem afetar se o produto esta
+  // disponivel (isso e responsabilidade de ProdutoDisponibilidade acima).
+  // Duas formas de vigencia, mutuamente exclusivas na pratica:
+
+  // 1) Periodo absoluto (ex: Black Friday de 25/11 a 27/11) -- usar quando
+  //    NAO for recorrente.
+  dataInicio DateTime?
+  dataFim    DateTime?
+
+  // 2) Recorrente (ex: Happy Hour toda sexta e sabado, das 18h as 20h) --
+  //    quando recorrente=true, o sistema ignora dataInicio/dataFim e passa
+  //    a considerar os dias da semana + horario abaixo, repetindo toda semana.
+  recorrente Boolean @default(false)
+  domingo    Boolean @default(false)
+  segunda    Boolean @default(false)
+  terca      Boolean @default(false)
+  quarta     Boolean @default(false)
+  quinta     Boolean @default(false)
+  sexta      Boolean @default(false)
+  sabado     Boolean @default(false)
+  horaInicio String?
+  horaFim    String?
+
+  ativo Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+   produtoId String
+  produto   Produto @relation(fields: [produtoId], references: [id])
+
+  // Opcional: se preenchido, a promocao vale so para esta variacao especifica
+  // (ex: so no "Litrao"). Se null, vale para TODAS as variacoes do produto.
+  produtoVariacaoPrecoId String?
+  produtoVariacaoPreco   ProdutoVariacaoPreco? @relation(fields: [produtoVariacaoPrecoId], references: [id])
+
+  @@index([produtoId])
+  @@index([produtoVariacaoPrecoId])
+}
+
+model Combo {
+  id        String  @id @default(uuid())
+  nome      String  // ex: "Combo Whisky + Red Bull"
+  descricao String?
+  preco     Float   // preco do pacote inteiro, independente da soma dos itens
+  ativo     Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  filialId String
+  filial   Filial @relation(fields: [filialId], references: [id])
+
+  itens ComboItem[]
+
+  @@index([filialId])
+}
+
+model ComboItem {
+  id         String @id @default(uuid())
+  quantidade Int    @default(1)
+
+  comboId String
+  combo   Combo @relation(fields: [comboId], references: [id])
+
+  produtoId String
+  produto   Produto @relation(fields: [produtoId], references: [id])
+
+  @@unique([comboId, produtoId]) // um produto so pode aparecer uma vez por combo
+  @@index([comboId])
   @@index([produtoId])
 }
