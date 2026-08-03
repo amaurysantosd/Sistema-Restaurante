@@ -13,7 +13,7 @@ import {
 import { CategoriaService } from './categoria.service';
 import { CreateCategoriaDto } from './dto/create-categoria.dto';
 import { UpdateCategoriaDto } from './dto/update-categoria.dto';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
  /* Define que esta classe controla as rotas /categoria.
  Controller Significa que todas as rotas começam com /categoria */

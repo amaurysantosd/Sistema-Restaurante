@@ -20,6 +20,10 @@ describe('CategoriaController', () => {
     empresaId: 'empresa-1',
   };
 
+  // empresaId vem do token (req.user), nao mais de argumento direto -- mesmo
+  // padrao usado pelos outros controllers protegidos por JwtAuthGuard.
+  const reqMock = (empresaId: string) => ({ user: { empresaId } }) as any;
+
   beforeEach(async () => {
     service = {
       create: jest.fn(),
@@ -61,7 +65,7 @@ describe('CategoriaController', () => {
     it('should delegate to the service with empresaId', async () => {
       service.findAll.mockResolvedValue([categoriaMock]);
 
-      const result = await controller.findAll('empresa-1');
+      const result = await controller.findAll(reqMock('empresa-1'));
 
       expect(service.findAll).toHaveBeenCalledWith('empresa-1');
       expect(result).toEqual([categoriaMock]);
@@ -70,7 +74,7 @@ describe('CategoriaController', () => {
     it('should filter by empresaId', async () => {
       service.findAll.mockResolvedValue([]);
 
-      await controller.findAll('empresa-2');
+      await controller.findAll(reqMock('empresa-2'));
 
       expect(service.findAll).toHaveBeenCalledWith('empresa-2');
     });
@@ -80,7 +84,7 @@ describe('CategoriaController', () => {
     it('should delegate to the service with id and empresaId', async () => {
       service.findOne.mockResolvedValue(categoriaMock);
 
-      const result = await controller.findOne('categoria-1', 'empresa-1');
+      const result = await controller.findOne('categoria-1', reqMock('empresa-1'));
 
       expect(service.findOne).toHaveBeenCalledWith('categoria-1', 'empresa-1');
       expect(result).toEqual(categoriaMock);
@@ -90,7 +94,7 @@ describe('CategoriaController', () => {
       service.findOne.mockRejectedValue(new NotFoundException());
 
       await expect(
-        controller.findOne('categoria-not-found', 'empresa-1'),
+        controller.findOne('categoria-not-found', reqMock('empresa-1')),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -98,7 +102,7 @@ describe('CategoriaController', () => {
       service.findOne.mockRejectedValue(new NotFoundException());
 
       await expect(
-        controller.findOne('categoria-1', 'empresa-2'),
+        controller.findOne('categoria-1', reqMock('empresa-2')),
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -109,7 +113,7 @@ describe('CategoriaController', () => {
       service.update.mockResolvedValue(updated);
 
       const updateDto = { nome: 'Bebidas Quentes' };
-      const result = await controller.update('categoria-1', 'empresa-1', updateDto);
+      const result = await controller.update('categoria-1', reqMock('empresa-1'), updateDto);
 
       expect(service.update).toHaveBeenCalledWith('categoria-1', 'empresa-1', updateDto);
       expect(result).toEqual(updated);
@@ -119,7 +123,7 @@ describe('CategoriaController', () => {
       service.update.mockRejectedValue(new NotFoundException());
 
       await expect(
-        controller.update('categoria-not-found', 'empresa-1', { nome: 'Novo Nome' }),
+        controller.update('categoria-not-found', reqMock('empresa-1'), { nome: 'Novo Nome' }),
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -128,7 +132,7 @@ describe('CategoriaController', () => {
     it('should delegate to the service', async () => {
       service.remove.mockResolvedValue(categoriaMock);
 
-      const result = await controller.remove('categoria-1', 'empresa-1');
+      const result = await controller.remove('categoria-1', reqMock('empresa-1'));
 
       expect(service.remove).toHaveBeenCalledWith('categoria-1', 'empresa-1');
       expect(result).toEqual(categoriaMock);
@@ -138,7 +142,7 @@ describe('CategoriaController', () => {
       service.remove.mockRejectedValue(new NotFoundException());
 
       await expect(
-        controller.remove('categoria-not-found', 'empresa-1'),
+        controller.remove('categoria-not-found', reqMock('empresa-1')),
       ).rejects.toThrow(NotFoundException);
     });
   });
