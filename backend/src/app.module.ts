@@ -28,6 +28,9 @@ import { ComboItemModule } from './combo-item/combo-item.module';
 import { RestricaoAlimentarModule } from './restricao-alimentar/restricao-alimentar.module';
 import { ClienteAuthModule } from './cliente-auth/cliente-auth.module';
 import { FavoritoModule } from './favorito/favorito.module';
+import { HistoricoVisitaModule } from './historico-visita/historico-visita.module';
+import { ClienteRestricaoModule } from './cliente-restricao/cliente-restricao.module';
+import { ClienteFilialModule } from './cliente-filial/cliente-filial.module';
 
 /* @Module({
   imports: [PrismaModule, EmpresaModule, CategoriaModule, FilialModule, UsuarioModule, AuthModule, AmbienteModule],
@@ -65,6 +68,9 @@ import { FavoritoModule } from './favorito/favorito.module';
     RestricaoAlimentarModule,
     ClienteAuthModule,
     FavoritoModule,
+    HistoricoVisitaModule,
+    ClienteRestricaoModule,
+    ClienteFilialModule,
   ],
 })
 
