@@ -29,6 +29,7 @@ export class AuthService {
     const payload = {
       sub: usuario.id,
       empresaId: usuario.empresaId,
+      filialId: usuario.filialId,
       perfil: usuario.perfil,
       superAdmin: usuario.superAdmin, // NOVO
     };
