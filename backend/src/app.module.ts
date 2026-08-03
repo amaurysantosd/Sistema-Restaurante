@@ -31,6 +31,7 @@ import { FavoritoModule } from './favorito/favorito.module';
 import { HistoricoVisitaModule } from './historico-visita/historico-visita.module';
 import { ClienteRestricaoModule } from './cliente-restricao/cliente-restricao.module';
 import { ClienteFilialModule } from './cliente-filial/cliente-filial.module';
+import { TipoChamadoModule } from './tipo-chamado/tipo-chamado.module';
 
 /* @Module({
   imports: [PrismaModule, EmpresaModule, CategoriaModule, FilialModule, UsuarioModule, AuthModule, AmbienteModule],
@@ -71,6 +72,7 @@ import { ClienteFilialModule } from './cliente-filial/cliente-filial.module';
     HistoricoVisitaModule,
     ClienteRestricaoModule,
     ClienteFilialModule,
+    TipoChamadoModule,
   ],
 })
 
