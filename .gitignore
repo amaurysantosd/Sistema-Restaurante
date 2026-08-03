@@ -6,3 +6,5 @@ coverage/
 .next/
 .vscode/settings.json
 *.log
+.claude/settings.local.json
+*Zone.Identifier
