@@ -34,6 +34,7 @@ import { ClienteFilialModule } from './cliente-filial/cliente-filial.module';
 import { TipoChamadoModule } from './tipo-chamado/tipo-chamado.module';
 import { ChamadoModule } from './chamado/chamado.module';
 import { ComandaModule } from './comanda/comanda.module';
+import { ConsumoClienteModule } from './consumo-cliente/consumo-cliente.module';
 
 /* @Module({
   imports: [PrismaModule, EmpresaModule, CategoriaModule, FilialModule, UsuarioModule, AuthModule, AmbienteModule],
@@ -77,6 +78,7 @@ import { ComandaModule } from './comanda/comanda.module';
     TipoChamadoModule,
     ChamadoModule,
     ComandaModule,
+    ConsumoClienteModule,
   ],
 })
 
