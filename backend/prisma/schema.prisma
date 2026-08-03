@@ -41,6 +41,8 @@ model Empresa {
   ingredientes Ingrediente[]
 
   tags Tag[]
+
+  tiposChamado TipoChamado[]
 }
 
 model Filial {
@@ -53,6 +55,10 @@ model Filial {
   matriz    Boolean  @default(false) // Marca se esta Filial e a sede/matriz da empresa
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Se o garcom da area consegue ver o que o cliente marcou como consumido
+  // (ConsumoCliente) -- feature informal do cliente, exibicao pro staff e opcional
+  exibirConsumoClienteParaGarcom Boolean @default(false)
 
   empresaId String
   empresa   Empresa @relation(fields: [empresaId], references: [id])
@@ -111,6 +117,10 @@ model Mesa {
   // Cria um índice para a coluna ambienteId
   @@index([ambienteId])
   historicoVisitas HistoricoVisita[]
+
+  comandas Comanda[]
+  chamados Chamado[]
+  consumosCliente ConsumoCliente[]
 }
 
 model Usuario {
@@ -133,6 +143,10 @@ model Usuario {
 
   @@index([empresaId])
   @@index([filialId])
+
+  comandasAbertas Comanda[]
+  itensComandaCriados ItemComanda[]
+  chamadosAtendidos Chamado[]
 }
 
 model Categoria {
@@ -144,6 +158,11 @@ model Categoria {
 
   empresaId String
   empresa   Empresa @relation(fields: [empresaId], references: [id])
+
+  // Destino padrao (Cozinha/Bar) dos produtos desta categoria -- Produto.destino
+  // pode sobrescrever pontualmente. Default COZINHA e so um valor de partida para
+  // categorias ja existentes; revisar manualmente apos a migration.
+  destinoPadrao DestinoPreparo @default(COZINHA)
 
   @@unique([empresaId, nome])
   @@index([empresaId])
@@ -184,6 +203,10 @@ model Produto {
   teorAlcoolico   Float?  // percentual de teor alcoolico
   ibu             Int?    // amargor, especifico de cervejas
 
+  // Opcional -- se null, usa o destinoPadrao da Categoria. Preenchido so quando
+  // este produto especifico foge da regra padrao da propria categoria.
+  destino DestinoPreparo?
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime? // soft delete: nulo = ativo, preenchido = "removido"
@@ -210,6 +233,7 @@ model Produto {
   comboItems ComboItem[]
   promocaos Promocao[]
   favoritos Favorito[]
+  consumosCliente ConsumoCliente[]
 }
 
 enum TipoMidia {
@@ -353,6 +377,7 @@ model ProdutoVariacaoPreco {
 
   @@index([produtoId])
   promocaos Promocao[]
+  itensComanda ItemComanda[]
 }
 
 model ProdutoDisponibilidade {
@@ -454,6 +479,8 @@ model Combo {
   itens ComboItem[]
 
   @@index([filialId])
+
+  itensComanda ItemComanda[]
 }
 
 model ComboItem {
@@ -489,6 +516,7 @@ model Cliente {
   favoritos        Favorito[]
   historicoVisitas HistoricoVisita[]
   restricoes       ClienteRestricao[]
+  consumos         ConsumoCliente[]
 }
 
 model ClienteFilial {
@@ -575,4 +603,130 @@ model RestricaoAlimentar {
   updatedAt DateTime @updatedAt
 
   clientes ClienteRestricao[]
+}
+
+// ==========================================================================
+// Fase 4 -- Atendimento (Comandas, Chamados de Mesa, Consumo do Cliente)
+// ==========================================================================
+
+enum DestinoPreparo {
+  COZINHA
+  BAR
+}
+
+enum StatusChamado {
+  PENDENTE
+  EM_ATENDIMENTO
+  ATENDIDO
+}
+
+enum StatusComanda {
+  ABERTA
+  FECHADA
+  CANCELADA
+}
+
+enum StatusItemComanda {
+  PENDENTE
+  EM_PREPARO
+  PRONTO
+  ENTREGUE
+  CANCELADO
+}
+
+model TipoChamado {
+  id    String  @id @default(uuid())
+  nome  String
+  ativo Boolean @default(true)
+
+  empresaId String
+  empresa   Empresa @relation(fields: [empresaId], references: [id])
+
+  chamados Chamado[]
+
+  @@unique([empresaId, nome])
+  @@index([empresaId])
+}
+
+model Chamado {
+  id         String        @id @default(uuid())
+  status     StatusChamado @default(PENDENTE)
+  criadoEm   DateTime      @default(now())
+  atendidoEm DateTime?
+
+  tipoChamadoId String
+  tipoChamado   TipoChamado @relation(fields: [tipoChamadoId], references: [id])
+
+  mesaId String
+  mesa   Mesa @relation(fields: [mesaId], references: [id])
+
+  atendidoPorUsuarioId String?
+  atendidoPorUsuario   Usuario? @relation(fields: [atendidoPorUsuarioId], references: [id])
+
+  @@index([mesaId])
+}
+
+model Comanda {
+  id     String        @id @default(uuid())
+  nome   String        @default("Principal")
+  status StatusComanda @default(ABERTA)
+
+  abertaEm  DateTime  @default(now())
+  fechadaEm DateTime?
+
+  mesaId String
+  mesa   Mesa @relation(fields: [mesaId], references: [id])
+
+  abertaPorUsuarioId String
+  abertaPorUsuario   Usuario @relation(fields: [abertaPorUsuarioId], references: [id])
+
+  itens ItemComanda[]
+
+  @@index([mesaId])
+}
+
+model ItemComanda {
+  id            String            @id @default(uuid())
+  quantidade    Int               @default(1)
+  precoUnitario Float             // CONGELADO no momento da criacao -- nunca muda depois
+  status        StatusItemComanda @default(PENDENTE)
+  destino       DestinoPreparo    // copiado do Produto/Categoria no momento da criacao
+
+  criadoEm   DateTime  @default(now())
+  prontoEm   DateTime?
+  entregueEm DateTime?
+
+  comandaId String
+  comanda   Comanda @relation(fields: [comandaId], references: [id])
+
+  // EXATAMENTE UM dos dois deve estar preenchido (Produto OU Combo, nunca os dois
+  // nem nenhum). Validar no Service -- o banco nao forca isso sozinho.
+  produtoVariacaoPrecoId String?
+  produtoVariacaoPreco   ProdutoVariacaoPreco? @relation(fields: [produtoVariacaoPrecoId], references: [id])
+
+  comboId String?
+  combo   Combo?  @relation(fields: [comboId], references: [id])
+
+  criadoPorUsuarioId String
+  criadoPorUsuario   Usuario @relation(fields: [criadoPorUsuarioId], references: [id])
+
+  @@index([comandaId])
+}
+
+model ConsumoCliente {
+  id         String   @id @default(uuid())
+  quantidade Int      @default(1)
+  marcadoEm  DateTime @default(now())
+
+  clienteId String
+  cliente   Cliente @relation(fields: [clienteId], references: [id])
+
+  produtoId String
+  produto   Produto @relation(fields: [produtoId], references: [id])
+
+  mesaId String
+  mesa   Mesa @relation(fields: [mesaId], references: [id])
+
+  @@index([clienteId])
+  @@index([mesaId])
 }
