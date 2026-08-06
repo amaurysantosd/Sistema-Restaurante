@@ -5,11 +5,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { PresencaService } from '../presenca/presenca.service';
 import { CreateConsumoClienteDto } from './dto/create-consumo-cliente.dto';
 
 @Injectable()
 export class ConsumoClienteService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly presencaService: PresencaService,
+  ) {}
 
   // Sem @@unique no schema -- cada marcacao e um evento proprio (nao soma
   // quantidade numa linha existente), pra preservar o "quando" de cada
@@ -32,7 +36,7 @@ export class ConsumoClienteService {
       throw new BadRequestException('Mesa informada não existe ou está inativa');
     }
 
-    return this.prisma.consumoCliente.create({
+    const consumo = await this.prisma.consumoCliente.create({
       data: {
         clienteId,
         produtoId: dto.produtoId,
@@ -40,6 +44,12 @@ export class ConsumoClienteService {
         quantidade: dto.quantidade ?? 1,
       },
     });
+
+    // Marcar consumo e uma acao bem indicativa de presenca real -- atualiza
+    // a ultima atividade da sessao ativa, se houver (Fase 5).
+    await this.presencaService.registrarAtividade(clienteId, dto.mesaId);
+
+    return consumo;
   }
 
   findAllByCliente(clienteId: string) {
