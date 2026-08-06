@@ -121,6 +121,7 @@ model Mesa {
   comandas Comanda[]
   chamados Chamado[]
   consumosCliente ConsumoCliente[]
+  sessoesPresenca SessaoPresenca[]
 }
 
 model Usuario {
@@ -517,6 +518,7 @@ model Cliente {
   historicoVisitas HistoricoVisita[]
   restricoes       ClienteRestricao[]
   consumos         ConsumoCliente[]
+  sessoesPresenca  SessaoPresenca[]
 }
 
 model ClienteFilial {
@@ -526,6 +528,11 @@ model ClienteFilial {
   saldoCashback    Float    @default(0)
   primeiraVisita   DateTime @default(now())
   ativo            Boolean  @default(true)
+
+  // Marcado manualmente pelo staff, independente da contagem automatica de
+  // visitas/pontos -- cobre casos que numero nenhum capturaria (amigo do
+  // dono, influenciador, etc.)
+  vipManual Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -729,4 +736,32 @@ model ConsumoCliente {
 
   @@index([clienteId])
   @@index([mesaId])
+}
+
+// ==========================================================================
+// Fase 5 -- Presenca Inteligente (check-in automatico via QR Code)
+// ==========================================================================
+
+enum StatusSessao {
+  ATIVA
+  ENCERRADA
+}
+
+model SessaoPresenca {
+  id     String       @id @default(uuid())
+  status StatusSessao @default(ATIVA)
+
+  checkInEm         DateTime  @default(now())
+  ultimaAtividadeEm DateTime  @default(now()) // atualizado a cada acao relevante do cliente
+  encerradaEm       DateTime?
+
+  clienteId String
+  cliente   Cliente @relation(fields: [clienteId], references: [id])
+
+  mesaId String
+  mesa   Mesa @relation(fields: [mesaId], references: [id])
+
+  @@index([clienteId])
+  @@index([mesaId])
+  @@index([status])
 }
