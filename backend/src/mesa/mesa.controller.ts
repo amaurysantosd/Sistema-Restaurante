@@ -14,19 +14,35 @@ import { CreateMesaDto } from './dto/create-mesa.dto';
 import { UpdateMesaDto } from './dto/update-mesa.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Public } from '../auth/public.decorator'; // NOVO
+import { OptionalClienteAuthGuard } from '../cliente-auth/optional-cliente-auth.guard';
+import { PresencaService } from '../presenca/presenca.service';
 
 @Controller('mesa')
 @UseGuards(JwtAuthGuard)
 export class MesaController {
-  constructor(private readonly mesaService: MesaService) {}
+  constructor(
+    private readonly mesaService: MesaService,
+    private readonly presencaService: PresencaService,
+  ) {}
 
-  // Rota PUBLICA: o @Public() sobrescreve o @UseGuards da classe,
-  // liberando esta rota especifica sem exigir token.
-  // Usada pelo cliente do restaurante ao escanear o QR Code da mesa.
+  // Rota PUBLICA: o @Public() sobrescreve o @UseGuards(JwtAuthGuard) da
+  // classe, liberando esta rota sem exigir token de staff. O
+  // OptionalClienteAuthGuard, por sua vez, NUNCA bloqueia -- so tenta
+  // reconhecer um cliente logado (req.user), pra disparar o check-in de
+  // presenca quando houver. Sem token de cliente (ou invalido), o
+  // comportamento e identico ao de antes da Fase 5: so retorna os dados do
+  // cardapio/mesa, sem criar sessao.
   @Public()
+  @UseGuards(OptionalClienteAuthGuard)
   @Get('qrcode/:codigo')
-  buscarPorQrCode(@Param('codigo') codigo: string) {
-    return this.mesaService.buscarPorQrCode(codigo);
+  async buscarPorQrCode(@Param('codigo') codigo: string, @Req() req: any) {
+    const resultado = await this.mesaService.buscarPorQrCode(codigo);
+
+    if (req.user?.clienteId) {
+      await this.presencaService.checkIn(req.user.clienteId, resultado.mesa.id);
+    }
+
+    return resultado;
   }
 
   @Post()
