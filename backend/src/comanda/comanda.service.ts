@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { StatusComanda } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { PresencaService } from '../presenca/presenca.service';
 import { CreateComandaDto } from './dto/create-comanda.dto';
 
 const includeItens = {
@@ -14,7 +15,10 @@ type ComandaComItens = {
 
 @Injectable()
 export class ComandaService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly presencaService: PresencaService,
+  ) {}
 
   async abrir(dto: CreateComandaDto, empresaId: string, usuarioId: string) {
     const mesa = await this.prisma.mesa.findFirst({
@@ -71,13 +75,17 @@ export class ComandaService {
   }
 
   async fechar(id: string, empresaId: string) {
-    await this.buscarAberta(id, empresaId, 'fechar');
+    const comanda = await this.buscarAberta(id, empresaId, 'fechar');
 
     const atualizada = await this.prisma.comanda.update({
       where: { id },
       data: { status: StatusComanda.FECHADA, fechadaEm: new Date() },
       include: includeItens,
     });
+
+    // Fechar a comanda encerra tambem qualquer SessaoPresenca ativa na mesma
+    // mesa (Fase 5) -- a mesa "esvaziou" quando a conta fecha.
+    await this.presencaService.encerrarPorFechamentoDeComanda(comanda.mesaId);
 
     return this.comTotal(atualizada);
   }
