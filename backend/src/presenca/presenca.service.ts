@@ -1,8 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { SessaoPresenca, StatusSessao } from '@prisma/client';
+import { Prisma, SessaoPresenca, StatusSessao } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AtendimentoGateway } from '../atendimento/atendimento.gateway';
+import { HistoricoVisitaService } from '../historico-visita/historico-visita.service';
 import {
   JANELA_REAPROVEITAMENTO_SESSAO_HORAS,
   LIMITE_INATIVIDADE_HORAS,
@@ -15,11 +16,16 @@ function horasAtras(horas: number): Date {
   return new Date(Date.now() - horas * 60 * 60 * 1000);
 }
 
+type MesaComFilial = Prisma.MesaGetPayload<{
+  include: { ambiente: { include: { filial: true } } };
+}>;
+
 @Injectable()
 export class PresencaService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly gateway: AtendimentoGateway,
+    private readonly historicoVisitaService: HistoricoVisitaService,
   ) {}
 
   // Disparado pelo check-in automatico no QR Code (so quando o cliente esta
@@ -43,11 +49,25 @@ export class PresencaService {
       });
     }
 
+    const mesa = await this.prisma.mesa.findUniqueOrThrow({
+      where: { id: mesaId },
+      include: { ambiente: { include: { filial: true } } },
+    });
+
+    // Sessao NOVA (nao reaproveitamento) conta como visita de verdade --
+    // registra ANTES do calculo de recorrente/VIP, ja que esse calculo
+    // depende do HistoricoVisita/ClienteFilial que este passo garante.
+    await this.historicoVisitaService.registrarVisita(
+      clienteId,
+      mesa.ambiente.filialId,
+      mesaId,
+    );
+
     const sessao = await this.prisma.sessaoPresenca.create({
       data: { clienteId, mesaId },
     });
 
-    await this.avaliarNotavel(clienteId, mesaId, sessao);
+    await this.avaliarNotavel(clienteId, mesa, sessao);
 
     return sessao;
   }
@@ -104,12 +124,7 @@ export class PresencaService {
   // So roda na CRIACAO de uma sessao nova (nao em reaproveitamento) -- avisa
   // o staff em tempo real quando quem chegou e recorrente ou VIP, pra um
   // atendimento diferenciado.
-  private async avaliarNotavel(clienteId: string, mesaId: string, sessao: SessaoPresenca) {
-    const mesa = await this.prisma.mesa.findUniqueOrThrow({
-      where: { id: mesaId },
-      include: { ambiente: { include: { filial: true } } },
-    });
-
+  private async avaliarNotavel(clienteId: string, mesa: MesaComFilial, sessao: SessaoPresenca) {
     const filialId = mesa.ambiente.filialId;
     const empresaId = mesa.ambiente.filial.empresaId;
 

@@ -8,5 +8,6 @@ import { HistoricoVisitaService } from './historico-visita.service';
   imports: [PrismaModule, ClienteAuthModule],
   controllers: [HistoricoVisitaController],
   providers: [HistoricoVisitaService],
+  exports: [HistoricoVisitaService],
 })
 export class HistoricoVisitaModule {}
