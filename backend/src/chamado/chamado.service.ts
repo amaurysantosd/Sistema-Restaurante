@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { StatusChamado } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { AtendimentoGateway } from './atendimento.gateway';
+import { AtendimentoGateway } from '../atendimento/atendimento.gateway';
 
 const includeCompleto = {
   tipoChamado: true,

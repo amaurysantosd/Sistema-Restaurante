@@ -9,10 +9,11 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 
 /**
- * Gateway compartilhado de atendimento em tempo real. Nasce aqui para
- * notificar Chamados, mas o design (rooms por filial/empresa) e pensado
- * para tambem carregar eventos de Comanda/ItemComanda mais adiante (painel
- * do garcom), sem precisar de uma segunda conexao/namespace no cliente.
+ * Gateway compartilhado de atendimento em tempo real. Nasceu na Fase 4 para
+ * notificar Chamados; a Fase 5 (Presenca Inteligente) reaproveita o mesmo
+ * Gateway para o evento de cliente notavel -- por isso mora em seu proprio
+ * modulo (`atendimento`), importado por `chamado` e `presenca`, em vez de
+ * pertencer a um dos dois.
  */
 @Injectable()
 @WebSocketGateway({ cors: { origin: '*' } })
@@ -60,5 +61,12 @@ export class AtendimentoGateway implements OnGatewayConnection {
       .to(`filial:${filialId}`)
       .to(`empresa:${empresaId}`)
       .emit('chamado:atualizado', chamado);
+  }
+
+  notificarClienteNotavel(filialId: string, empresaId: string, dados: unknown) {
+    this.server
+      .to(`filial:${filialId}`)
+      .to(`empresa:${empresaId}`)
+      .emit('presenca:cliente-notavel', dados);
   }
 }
