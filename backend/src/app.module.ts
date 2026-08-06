@@ -8,6 +8,7 @@ import { FilialModule } from './filial/filial.module';
 import { UsuarioModule } from './usuario/usuario.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AmbienteModule } from './ambiente/ambiente.module';
 import { TipoAmbienteModule } from './tipo-ambiente/tipo-ambiente.module';
 import { MesaModule } from './mesa/mesa.module';
@@ -35,6 +36,7 @@ import { TipoChamadoModule } from './tipo-chamado/tipo-chamado.module';
 import { ChamadoModule } from './chamado/chamado.module';
 import { ComandaModule } from './comanda/comanda.module';
 import { ConsumoClienteModule } from './consumo-cliente/consumo-cliente.module';
+import { PresencaModule } from './presenca/presenca.module';
 
 /* @Module({
   imports: [PrismaModule, EmpresaModule, CategoriaModule, FilialModule, UsuarioModule, AuthModule, AmbienteModule],
@@ -46,6 +48,7 @@ import { ConsumoClienteModule } from './consumo-cliente/consumo-cliente.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     EmpresaModule,
     CategoriaModule,
@@ -79,6 +82,7 @@ import { ConsumoClienteModule } from './consumo-cliente/consumo-cliente.module';
     ChamadoModule,
     ComandaModule,
     ConsumoClienteModule,
+    PresencaModule,
   ],
 })
 
