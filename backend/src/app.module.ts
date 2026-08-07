@@ -37,6 +37,7 @@ import { ChamadoModule } from './chamado/chamado.module';
 import { ComandaModule } from './comanda/comanda.module';
 import { ConsumoClienteModule } from './consumo-cliente/consumo-cliente.module';
 import { PresencaModule } from './presenca/presenca.module';
+import { EventoModule } from './evento/evento.module';
 
 /* @Module({
   imports: [PrismaModule, EmpresaModule, CategoriaModule, FilialModule, UsuarioModule, AuthModule, AmbienteModule],
@@ -83,6 +84,7 @@ import { PresencaModule } from './presenca/presenca.module';
     ComandaModule,
     ConsumoClienteModule,
     PresencaModule,
+    EventoModule,
   ],
 })
 
