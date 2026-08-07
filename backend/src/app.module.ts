@@ -39,6 +39,7 @@ import { ConsumoClienteModule } from './consumo-cliente/consumo-cliente.module';
 import { PresencaModule } from './presenca/presenca.module';
 import { EventoModule } from './evento/evento.module';
 import { ContaRecebimentoModule } from './conta-recebimento/conta-recebimento.module';
+import { ReservaModule } from './reserva/reserva.module';
 
 /* @Module({
   imports: [PrismaModule, EmpresaModule, CategoriaModule, FilialModule, UsuarioModule, AuthModule, AmbienteModule],
@@ -87,6 +88,7 @@ import { ContaRecebimentoModule } from './conta-recebimento/conta-recebimento.mo
     PresencaModule,
     EventoModule,
     ContaRecebimentoModule,
+    ReservaModule,
   ],
 })
 
