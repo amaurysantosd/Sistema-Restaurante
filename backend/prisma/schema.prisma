@@ -43,6 +43,11 @@ model Empresa {
   tags Tag[]
 
   tiposChamado TipoChamado[]
+
+  // Config de recebimento de reservas (Fase 6). PIX_MANUAL por default --
+  // GATEWAY existe so como opcao futura, depende do modulo Financeiro (Fase 9).
+  modalidadePagamentoReserva ModalidadePagamentoReserva @default(PIX_MANUAL)
+  contasRecebimento          ContaRecebimento[]
 }
 
 model Filial {
@@ -60,6 +65,11 @@ model Filial {
   // (ConsumoCliente) -- feature informal do cliente, exibicao pro staff e opcional
   exibirConsumoClienteParaGarcom Boolean @default(false)
 
+  // PROVISORIO (Fase 6) -- migrar para painel administrativo de configuracao
+  // quando esse painel existir, mesmo espirito das constantes de Presenca.
+  reservaExigeCadastro         Boolean @default(false)
+  reservaPercentualSinalPadrao Float   @default(50)
+
   empresaId String
   empresa   Empresa @relation(fields: [empresaId], references: [id])
 
@@ -73,6 +83,10 @@ model Filial {
 
   clienteFiliais ClienteFilial[]
   historicoVisitas HistoricoVisita[]
+
+  eventos Evento[]
+  reservas Reserva[]
+  listaEspera ListaEspera[]
 }
 
 model Ambiente {
@@ -96,6 +110,9 @@ model Ambiente {
 
   // Lado inverso da relacao: um Ambiente pode ter varias Mesas
   mesas Mesa[]
+
+  eventos Evento[]
+  reservas Reserva[]
 }
 
 model Mesa {
@@ -122,6 +139,7 @@ model Mesa {
   chamados Chamado[]
   consumosCliente ConsumoCliente[]
   sessoesPresenca SessaoPresenca[]
+  reservas Reserva[]
 }
 
 model Usuario {
@@ -148,6 +166,7 @@ model Usuario {
   comandasAbertas Comanda[]
   itensComandaCriados ItemComanda[]
   chamadosAtendidos Chamado[]
+  reservasCriadas Reserva[]
 }
 
 model Categoria {
@@ -519,6 +538,8 @@ model Cliente {
   restricoes       ClienteRestricao[]
   consumos         ConsumoCliente[]
   sessoesPresenca  SessaoPresenca[]
+  reservas         Reserva[]
+  listaEspera      ListaEspera[]
 }
 
 model ClienteFilial {
@@ -764,4 +785,159 @@ model SessaoPresenca {
   @@index([clienteId])
   @@index([mesaId])
   @@index([status])
+}
+
+// ==========================================================================
+// Fase 6 -- Reservas e Eventos
+// ==========================================================================
+
+enum TipoEvento {
+  PARTICULAR // aniversario/confraternizacao que bloqueia ambiente/filial inteiro
+  SAZONAL    // data comemorativa (natal, virada de ano, dia dos namorados)
+}
+
+enum StatusReserva {
+  PENDENTE
+  CONFIRMADA
+  CANCELADA
+  COMPARECEU
+  NAO_COMPARECEU // no-show, marcado automaticamente pelo job
+}
+
+enum StatusListaEspera {
+  AGUARDANDO
+  CHAMADO  // staff avisou que a mesa esta pronta
+  ATENDIDO // cliente foi acomodado
+  DESISTIU
+}
+
+enum ModalidadePagamentoReserva {
+  PIX_MANUAL // exibe dados da ContaRecebimento, staff confirma manualmente
+  GATEWAY    // integracao automatica -- NAO IMPLEMENTAR AGORA, depende da Fase 9
+}
+
+enum FinalidadeRecebimento {
+  COMANDA
+  RESERVA
+  EVENTO
+  GERAL
+}
+
+model Evento {
+  id        String     @id @default(uuid())
+  nome      String
+  tipo      TipoEvento
+  descricao String?
+
+  dataInicio DateTime
+  dataFim    DateTime
+
+  // Se preenchido, bloqueia a filial inteira nesse periodo. Se null mas
+  // ambienteId preenchido, bloqueia so aquele ambiente. Os dois nulos = evento
+  // "informativo", sem bloqueio automatico de reservas.
+  filialId String?
+  filial   Filial? @relation(fields: [filialId], references: [id])
+
+  ambienteId String?
+  ambiente   Ambiente? @relation(fields: [ambienteId], references: [id])
+
+  valorEntrada Float? // cobranca de entrada, se houver (ligacao futura com Financeiro)
+  ativo        Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reservas Reserva[]
+
+  @@index([filialId])
+  @@index([ambienteId])
+}
+
+model Reserva {
+  id                String        @id @default(uuid())
+  dataHora          DateTime
+  quantidadePessoas Int
+  status            StatusReserva @default(PENDENTE)
+  observacoes       String?
+
+  // Preenchido pelo staff quando a reserva e feita sem Cliente cadastrado
+  // (ex: reserva por telefone). Se clienteId existir, usar os dados do Cliente.
+  nomeConvidado     String?
+  telefoneConvidado String?
+
+  // Orcamento opcional -- so gera cobranca de sinal se preenchido E se a
+  // configuracao do estabelecimento previr cobranca para este caso
+  valorOrcamento  Float?
+  percentualSinal Float? // copiado da config no momento da criacao (congelado)
+  valorSinal      Float? // calculado: valorOrcamento * (percentualSinal / 100)
+  sinalPago       Boolean @default(false)
+
+  // Tolerancia de comparecimento, usada pelo job de no-show
+  toleranciaAte DateTime?
+
+  filialId String
+  filial   Filial @relation(fields: [filialId], references: [id])
+
+  ambienteId String?
+  ambiente   Ambiente? @relation(fields: [ambienteId], references: [id])
+
+  mesaId String?
+  mesa   Mesa? @relation(fields: [mesaId], references: [id])
+
+  eventoId String?
+  evento   Evento? @relation(fields: [eventoId], references: [id])
+
+  clienteId String?
+  cliente   Cliente? @relation(fields: [clienteId], references: [id])
+
+  criadoPorUsuarioId String?
+  criadoPorUsuario   Usuario? @relation(fields: [criadoPorUsuarioId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([filialId])
+  @@index([clienteId])
+  @@index([eventoId])
+  @@index([dataHora])
+}
+
+model ListaEspera {
+  id                String            @id @default(uuid())
+  quantidadePessoas Int
+  status            StatusListaEspera @default(AGUARDANDO)
+
+  nomeConvidado     String?
+  telefoneConvidado String?
+
+  criadoEm   DateTime  @default(now())
+  chamadoEm  DateTime?
+  atendidoEm DateTime?
+
+  filialId String
+  filial   Filial @relation(fields: [filialId], references: [id])
+
+  clienteId String?
+  cliente   Cliente? @relation(fields: [clienteId], references: [id])
+
+  @@index([filialId])
+  @@index([status])
+}
+
+model ContaRecebimento {
+  id             String                @id @default(uuid())
+  finalidade     FinalidadeRecebimento
+  chavePix       String
+  nomeFavorecido String
+  nomeBanco      String?
+  ativo          Boolean               @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  empresaId String
+  empresa   Empresa @relation(fields: [empresaId], references: [id])
+
+  @@unique([empresaId, finalidade])
+  @@index([empresaId])
 }
