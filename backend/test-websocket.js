@@ -1,7 +1,8 @@
 /**
- * Script de teste manual do AtendimentoGateway (WebSocket de Chamado).
- * NAO faz parte da aplicacao -- so uma ferramenta pra conferir na mao que a
- * notificacao em tempo real esta funcionando. Ver instrucoes de uso no chat.
+ * Script de teste manual do AtendimentoGateway (WebSocket compartilhado por
+ * Chamado, Fase 4, e Presenca, Fase 5). NAO faz parte da aplicacao -- so uma
+ * ferramenta pra conferir na mao que a notificacao em tempo real esta
+ * funcionando. Ver instrucoes de uso no chat.
  *
  * Uso:
  *   node test-websocket.js <TOKEN> [URL_DO_SERVIDOR]
@@ -36,7 +37,10 @@ const socket = io(url, {
 
 socket.on('connect', () => {
   console.log(`Conectado! socket.id = ${socket.id}`);
-  console.log('Aguardando eventos de chamado... (crie um Chamado em outro terminal/Insomnia)');
+  console.log(
+    'Aguardando eventos de chamado e de presenca... ' +
+      '(crie um Chamado, ou faca check-in de um cliente notavel via QR Code, em outro terminal/Insomnia)',
+  );
 });
 
 socket.on('disconnect', (reason) => {
@@ -58,4 +62,11 @@ socket.on('chamado:novo', (chamado) => {
 socket.on('chamado:atualizado', (chamado) => {
   console.log('\n=== chamado:atualizado ===');
   console.log(JSON.stringify(chamado, null, 2));
+});
+
+// Fase 5 -- disparado por PresencaService.avaliarNotavel quando o cliente que
+// fez check-in via QR Code e recorrente, VIP automatico ou VIP manual.
+socket.on('presenca:cliente-notavel', (dados) => {
+  console.log('\n=== presenca:cliente-notavel ===');
+  console.log(JSON.stringify(dados, null, 2));
 });
