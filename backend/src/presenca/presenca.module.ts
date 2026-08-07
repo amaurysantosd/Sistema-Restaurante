@@ -2,11 +2,12 @@ import { Module } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AtendimentoModule } from '../atendimento/atendimento.module';
 import { HistoricoVisitaModule } from '../historico-visita/historico-visita.module';
+import { ReservaModule } from '../reserva/reserva.module';
 import { PresencaController } from './presenca.controller';
 import { PresencaService } from './presenca.service';
 
 @Module({
-  imports: [PrismaModule, AtendimentoModule, HistoricoVisitaModule],
+  imports: [PrismaModule, AtendimentoModule, HistoricoVisitaModule, ReservaModule],
   controllers: [PresencaController],
   providers: [PresencaService],
   exports: [PresencaService],

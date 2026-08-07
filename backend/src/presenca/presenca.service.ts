@@ -4,6 +4,7 @@ import { Prisma, SessaoPresenca, StatusSessao } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AtendimentoGateway } from '../atendimento/atendimento.gateway';
 import { HistoricoVisitaService } from '../historico-visita/historico-visita.service';
+import { ReservaService } from '../reserva/reserva.service';
 import {
   JANELA_REAPROVEITAMENTO_SESSAO_HORAS,
   LIMITE_INATIVIDADE_HORAS,
@@ -26,6 +27,7 @@ export class PresencaService {
     private readonly prisma: PrismaService,
     private readonly gateway: AtendimentoGateway,
     private readonly historicoVisitaService: HistoricoVisitaService,
+    private readonly reservaService: ReservaService,
   ) {}
 
   // Disparado pelo check-in automatico no QR Code (so quando o cliente esta
@@ -33,6 +35,11 @@ export class PresencaService {
   // atividade foi dentro da janela; senao, cria uma nova e avalia se o
   // cliente e notavel (recorrente/VIP) pra notificar o staff.
   async checkIn(clienteId: string, mesaId: string) {
+    // 6.6 (Fase 6) -- roda em TODO check-in (nao so sessao nova), ja que o
+    // cliente pode ter escaneado antes da janela da reserva abrir. E um
+    // no-op silencioso se nao houver Reserva CONFIRMADA correspondente.
+    await this.reservaService.marcarComparecimentoSeHouver(clienteId, mesaId);
+
     const existente = await this.prisma.sessaoPresenca.findFirst({
       where: {
         clienteId,
