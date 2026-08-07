@@ -40,6 +40,7 @@ import { PresencaModule } from './presenca/presenca.module';
 import { EventoModule } from './evento/evento.module';
 import { ContaRecebimentoModule } from './conta-recebimento/conta-recebimento.module';
 import { ReservaModule } from './reserva/reserva.module';
+import { ListaEsperaModule } from './lista-espera/lista-espera.module';
 
 /* @Module({
   imports: [PrismaModule, EmpresaModule, CategoriaModule, FilialModule, UsuarioModule, AuthModule, AmbienteModule],
@@ -89,6 +90,7 @@ import { ReservaModule } from './reserva/reserva.module';
     EventoModule,
     ContaRecebimentoModule,
     ReservaModule,
+    ListaEsperaModule,
   ],
 })
 

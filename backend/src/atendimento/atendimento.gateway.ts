@@ -69,4 +69,18 @@ export class AtendimentoGateway implements OnGatewayConnection {
       .to(`empresa:${empresaId}`)
       .emit('presenca:cliente-notavel', dados);
   }
+
+  notificarListaEsperaNovo(filialId: string, empresaId: string, item: unknown) {
+    this.server
+      .to(`filial:${filialId}`)
+      .to(`empresa:${empresaId}`)
+      .emit('lista-espera:novo', item);
+  }
+
+  notificarListaEsperaAtualizado(filialId: string, empresaId: string, item: unknown) {
+    this.server
+      .to(`filial:${filialId}`)
+      .to(`empresa:${empresaId}`)
+      .emit('lista-espera:atualizado', item);
+  }
 }
