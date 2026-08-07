@@ -38,6 +38,7 @@ import { ComandaModule } from './comanda/comanda.module';
 import { ConsumoClienteModule } from './consumo-cliente/consumo-cliente.module';
 import { PresencaModule } from './presenca/presenca.module';
 import { EventoModule } from './evento/evento.module';
+import { ContaRecebimentoModule } from './conta-recebimento/conta-recebimento.module';
 
 /* @Module({
   imports: [PrismaModule, EmpresaModule, CategoriaModule, FilialModule, UsuarioModule, AuthModule, AmbienteModule],
@@ -85,6 +86,7 @@ import { EventoModule } from './evento/evento.module';
     ConsumoClienteModule,
     PresencaModule,
     EventoModule,
+    ContaRecebimentoModule,
   ],
 })
 
