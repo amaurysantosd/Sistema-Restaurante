@@ -17,6 +17,10 @@ function minutosAntes(data: Date, minutos: number): Date {
   return new Date(data.getTime() - minutos * 60 * 1000);
 }
 
+function intervalosSeSobrepoem(inicioA: Date, fimA: Date, inicioB: Date, fimB: Date): boolean {
+  return inicioA.getTime() < fimB.getTime() && fimA.getTime() > inicioB.getTime();
+}
+
 @Injectable()
 export class ReservaService {
   constructor(private readonly prisma: PrismaService) {}
@@ -77,46 +81,46 @@ export class ReservaService {
 
     const dataHora = new Date(dto.dataHora);
     const fimOcupacao = minutosDepois(dataHora, DURACAO_OCUPACAO_MESA_MINUTOS);
-    const inicioJanelaConflito = minutosAntes(dataHora, DURACAO_OCUPACAO_MESA_MINUTOS);
     const statusQueOcupam = [StatusReserva.PENDENTE, StatusReserva.CONFIRMADA];
 
     // 6.1 -- conflito de horario na mesma mesa/ambiente. Como o schema so tem
-    // dataHora (sem duracao explicita), duas reservas "colidem" se a diferenca
-    // entre os horarios for menor que DURACAO_OCUPACAO_MESA_MINUTOS.
-    if (dto.mesaId) {
-      const conflito = await this.prisma.reserva.findFirst({
-        where: {
-          mesaId: dto.mesaId,
-          status: { in: statusQueOcupam },
-          dataHora: { gt: inicioJanelaConflito, lt: fimOcupacao },
-        },
-      });
-      if (conflito) {
-        throw new BadRequestException('Já existe uma reserva para esta mesa nesse horário');
-      }
-    } else if (dto.ambienteId) {
-      const conflito = await this.prisma.reserva.findFirst({
-        where: {
-          ambienteId: dto.ambienteId,
-          status: { in: statusQueOcupam },
-          dataHora: { gt: inicioJanelaConflito, lt: fimOcupacao },
-        },
-      });
-      if (conflito) {
-        throw new BadRequestException('Já existe uma reserva para este ambiente nesse horário');
-      }
+    // dataHora (sem duracao explicita), duas reservas "colidem" quando seus
+    // intervalos de ocupacao se sobrepoem.
+    const reservasAtivas = await this.prisma.reserva.findMany({
+      where: {
+        filialId: dto.filialId,
+        status: { in: statusQueOcupam },
+      },
+    });
+
+    const existeConflitoReserva = reservasAtivas.some((reserva) => {
+      const inicioReserva = reserva.dataHora;
+      const fimReserva = minutosDepois(inicioReserva, DURACAO_OCUPACAO_MESA_MINUTOS);
+      const mesmaMesa = dto.mesaId ? reserva.mesaId === dto.mesaId : false;
+      const mesmoAmbiente = dto.ambienteId ? reserva.ambienteId === dto.ambienteId : false;
+
+      return (dto.mesaId ? mesmaMesa : mesmoAmbiente) && intervalosSeSobrepoem(dataHora, fimOcupacao, inicioReserva, fimReserva);
+    });
+
+    if (dto.mesaId && existeConflitoReserva) {
+      throw new BadRequestException('Já existe uma reserva para esta mesa nesse horário');
     }
 
-    // 6.1 -- Evento PARTICULAR bloqueia a filial/ambiente inteiro no periodo
-    const eventoBloqueando = await this.prisma.evento.findFirst({
+    if (dto.ambienteId && existeConflitoReserva) {
+      throw new BadRequestException('Já existe uma reserva para este ambiente nesse horário');
+    }
+
+    // 6.1 -- Eventos que bloqueiam a filial/ambiente no periodo
+    const eventosBloqueando = await this.prisma.evento.findMany({
       where: {
         ativo: true,
-        tipo: TipoEvento.PARTICULAR,
+        tipo: { in: [TipoEvento.PARTICULAR, TipoEvento.SAZONAL] },
         dataInicio: { lt: fimOcupacao },
         dataFim: { gt: dataHora },
         OR: [{ filialId: dto.filialId }, ...(dto.ambienteId ? [{ ambienteId: dto.ambienteId }] : [])],
       },
     });
+    const eventoBloqueando = eventosBloqueando[0];
     if (eventoBloqueando) {
       throw new BadRequestException(
         `Não é possível reservar: o evento "${eventoBloqueando.nome}" bloqueia este horário`,
